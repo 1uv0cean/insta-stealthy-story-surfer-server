@@ -24,9 +24,28 @@ app.get("/api/instagram/:username", async (req, res) => {
   }
 
   ig.state.generateDevice(id);
-  await ig.account.login(id, pw);
+
+  async function login() {
+    try {
+      await ig.account.login(id, pw);
+    } catch (error) {
+      if (
+        error.name === "IgResponseError" &&
+        error.response &&
+        error.response.statusCode === 400
+      ) {
+        console.error("Rate limited, retrying in 60 seconds...");
+        await new Promise((resolve) => setTimeout(resolve, 60000)); // 60초 대기
+        await login(); // 재시도
+      } else {
+        throw error; // 다른 오류는 다시 던짐
+      }
+    }
+  }
 
   try {
+    await login();
+
     const userId = await ig.user.getIdByUsername(username);
     const userInfo = await ig.user.info(userId);
     const feeds = await ig.feed.userStory(userId).items();
@@ -48,7 +67,5 @@ app.get("/api/instagram/:username", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-app.listen(3000, () => console.log("Server ready on port 3000."));
 
 module.exports = app;
