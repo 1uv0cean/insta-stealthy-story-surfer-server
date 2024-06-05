@@ -32,17 +32,8 @@ async function login(id, pw) {
   try {
     await ig.account.login(id, pw);
   } catch (error) {
-    if (
-      error.name === "IgResponseError" &&
-      error.response &&
-      error.response.statusCode === 400
-    ) {
-      console.error("Login failed. Waiting for 60 seconds...");
-      await new Promise((resolve) => setTimeout(resolve, 60000)); // 60초 대기
-      await rotateAccount(); // 다음 계정으로 전환 후 재시도
-    } else {
-      throw error; // 다른 오류는 다시 던짐
-    }
+    console.error(`Login failed for account: ${id}. Error: ${error.message}`);
+    throw error;
   }
 }
 
@@ -58,6 +49,8 @@ app.get("/api/instagram/:username", async (req, res) => {
   await rotateAccount();
 
   try {
+    await ig.user.searchExact(username);
+
     const userId = await ig.user.getIdByUsername(username);
     const userInfo = await ig.user.info(userId);
     const feeds = await ig.feed.userStory(userId).items();
