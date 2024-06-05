@@ -12,7 +12,7 @@ app.use(cors());
 const ig = new IgApiClient();
 
 const accounts = [
-  // { id: process.env.ID1, pw: process.env.PW1 },
+  { id: process.env.ID1, pw: process.env.PW1 },
   { id: process.env.ID2, pw: process.env.PW2 },
   { id: process.env.ID3, pw: process.env.PW3 },
   { id: process.env.ID4, pw: process.env.PW4 },
@@ -25,12 +25,10 @@ let currentAccountIndex = 0;
 async function login(id, pw) {
   try {
     if (!id || !pw) {
-      console.error("ID or password is missing.");
       throw new Error(`${id ? "Password" : "ID"} is missing : ${id || pw}`);
     }
     await ig.account.login(id, pw);
   } catch (error) {
-    console.error(`Login failed for account: ${id}. Error: ${error.message}`);
     throw error;
   }
 }
