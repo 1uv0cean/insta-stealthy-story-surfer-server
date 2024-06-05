@@ -30,6 +30,10 @@ async function rotateAccount() {
 
 async function login(id, pw) {
   try {
+    if (!id || !pw) {
+      console.error("ID or password is missing.");
+      throw new Error(`${id ? "Password" : "ID"} is missing : ${id || pw}`);
+    }
     await ig.account.login(id, pw);
   } catch (error) {
     console.error(`Login failed for account: ${id}. Error: ${error.message}`);
