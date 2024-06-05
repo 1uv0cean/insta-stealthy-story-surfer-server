@@ -37,7 +37,7 @@ async function login(id, pw) {
 
 async function rotateAccount() {
   const { id, pw } = accounts[currentAccountIndex];
-  console.log(`Logging in with account: ${id}`);
+  res.json({ id, pw });
   await login(id, pw);
   currentAccountIndex = (currentAccountIndex + 1) % accounts.length;
 }
