@@ -22,13 +22,6 @@ const accounts = [
 
 let currentAccountIndex = 0;
 
-async function rotateAccount() {
-  const { id, pw } = accounts[currentAccountIndex];
-  console.log(`Logging in with account: ${id}`);
-  await login(id, pw);
-  currentAccountIndex = (currentAccountIndex + 1) % accounts.length;
-}
-
 async function login(id, pw) {
   try {
     if (!id || !pw) {
@@ -40,6 +33,13 @@ async function login(id, pw) {
     console.error(`Login failed for account: ${id}. Error: ${error.message}`);
     throw error;
   }
+}
+
+async function rotateAccount() {
+  const { id, pw } = accounts[currentAccountIndex];
+  console.log(`Logging in with account: ${id}`);
+  await login(id, pw);
+  currentAccountIndex = (currentAccountIndex + 1) % accounts.length;
 }
 
 app.get("/api/instagram/:username", async (req, res) => {
