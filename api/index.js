@@ -12,7 +12,7 @@ app.use(cors());
 const ig = new IgApiClient();
 
 const accounts = [
-  { id: process.env.ID1, pw: process.env.PW1 },
+  // { id: process.env.ID1, pw: process.env.PW1 },
   { id: process.env.ID2, pw: process.env.PW2 },
   { id: process.env.ID3, pw: process.env.PW3 },
   { id: process.env.ID4, pw: process.env.PW4 },
@@ -37,7 +37,6 @@ async function login(id, pw) {
 
 async function rotateAccount() {
   const { id, pw } = accounts[currentAccountIndex];
-  res.json({ id, pw });
   await login(id, pw);
   currentAccountIndex = (currentAccountIndex + 1) % accounts.length;
 }
