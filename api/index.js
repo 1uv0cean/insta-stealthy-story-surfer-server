@@ -23,17 +23,26 @@ const accounts = [
 let currentAccountIndex = 0;
 
 async function rotateAccount() {
-  currentAccountIndex = (currentAccountIndex + 1) % accounts.length;
   const { id, pw } = accounts[currentAccountIndex];
   await login(id, pw);
+  currentAccountIndex = (currentAccountIndex + 1) % accounts.length;
 }
 
 async function login(id, pw) {
   try {
     await ig.account.login(id, pw);
   } catch (error) {
-    console.error(`Failed to log in with account: ${id}`);
-    throw error;
+    if (
+      error.name === "IgResponseError" &&
+      error.response &&
+      error.response.statusCode === 400
+    ) {
+      console.error("Login failed. Waiting for 60 seconds...");
+      await new Promise((resolve) => setTimeout(resolve, 60000)); // 60초 대기
+      await rotateAccount(); // 다음 계정으로 전환 후 재시도
+    } else {
+      throw error; // 다른 오류는 다시 던짐
+    }
   }
 }
 
@@ -46,9 +55,9 @@ app.get("/api/instagram/:username", async (req, res) => {
       .json({ error: "Environment variables not set properly" });
   }
 
-  try {
-    await rotateAccount();
+  await rotateAccount();
 
+  try {
     const userId = await ig.user.getIdByUsername(username);
     const userInfo = await ig.user.info(userId);
     const feeds = await ig.feed.userStory(userId).items();
@@ -66,6 +75,7 @@ app.get("/api/instagram/:username", async (req, res) => {
       userInfo,
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: error.message });
   }
 });
