@@ -24,6 +24,7 @@ let currentAccountIndex = 0;
 
 async function rotateAccount() {
   const { id, pw } = accounts[currentAccountIndex];
+  console.log(`Logging in with account: ${id}`);
   await login(id, pw);
   currentAccountIndex = (currentAccountIndex + 1) % accounts.length;
 }
