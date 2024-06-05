@@ -16,6 +16,8 @@ const accounts = [
   { id: process.env.ID2, pw: process.env.PW2 },
   { id: process.env.ID3, pw: process.env.PW3 },
   { id: process.env.ID4, pw: process.env.PW4 },
+  { id: process.env.ID5, pw: process.env.PW5 },
+  { id: process.env.ID6, pw: process.env.PW6 },
 ];
 
 let currentAccountIndex = 0;
@@ -30,17 +32,8 @@ async function login(id, pw) {
   try {
     await ig.account.login(id, pw);
   } catch (error) {
-    if (
-      error.name === "IgResponseError" &&
-      error.response &&
-      error.response.statusCode === 400
-    ) {
-      console.error("Rate limited, retrying in 60 seconds...");
-      await new Promise((resolve) => setTimeout(resolve, 60000)); // 60초 대기
-      await rotateAccount(); // 다음 계정으로 전환 후 재시도
-    } else {
-      throw error; // 다른 오류는 다시 던짐
-    }
+    console.error(`Failed to log in with account: ${id}`);
+    throw error;
   }
 }
 
@@ -53,9 +46,9 @@ app.get("/api/instagram/:username", async (req, res) => {
       .json({ error: "Environment variables not set properly" });
   }
 
-  await rotateAccount();
-
   try {
+    await rotateAccount();
+
     const userId = await ig.user.getIdByUsername(username);
     const userInfo = await ig.user.info(userId);
     const feeds = await ig.feed.userStory(userId).items();
@@ -73,7 +66,6 @@ app.get("/api/instagram/:username", async (req, res) => {
       userInfo,
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ error: error.message });
   }
 });
