@@ -20,38 +20,39 @@ const accounts = [
   { id: process.env.ID6, pw: process.env.PW6 },
 ];
 
-let currentAccountIndex = 0;
-
-async function login(id, pw) {
-  try {
-    if (!id || !pw) {
-      throw new Error(`${id ? "Password" : "ID"} is missing : ${id || pw}`);
-    }
-    await ig.account.login(id, pw);
-  } catch (error) {
-    throw error;
-  }
-}
-
-async function rotateAccount() {
-  const { id, pw } = accounts[currentAccountIndex];
-  await login(id, pw);
-  currentAccountIndex = (currentAccountIndex + 1) % accounts.length;
-}
-
 app.get("/api/instagram/:username", async (req, res) => {
   const { username } = req.params;
 
-  if (!accounts.every((acc) => acc.id && acc.pw)) {
+  const { id, pw } = accounts[Math.floor(Math.random() * accounts.length)];
+
+  if (!id || !pw) {
     return res
       .status(500)
       .json({ error: "Environment variables not set properly" });
   }
 
-  await rotateAccount();
+  ig.state.generateDevice(id);
+
+  async function login() {
+    try {
+      await ig.account.login(id, pw);
+    } catch (error) {
+      if (
+        error.name === "IgResponseError" &&
+        error.response &&
+        error.response.statusCode === 400
+      ) {
+        console.error("Rate limited, retrying in 60 seconds...");
+        await new Promise((resolve) => setTimeout(resolve, 60000)); // 60초 대기
+        await login(); // 다시 로그인 시도
+      } else {
+        throw error; // 다른 오류는 다시 던짐
+      }
+    }
+  }
 
   try {
-    await ig.user.searchExact(username);
+    await login();
 
     const userId = await ig.user.getIdByUsername(username);
     const userInfo = await ig.user.info(userId);
